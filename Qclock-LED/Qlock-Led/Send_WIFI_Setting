@@ -1,0 +1,67 @@
+#include <WiFi.h>
+#include <WebServer.h>
+#include <Preferences.h>
+
+Preferences preferences;
+WebServer server(80);
+
+const char* apSSID = "ESP32_Setup";
+const char* apPassword = "12345678";
+
+void handleRoot() {
+    String html = "<html><body>";
+    html += "<h2>WiFi Setup</h2>";
+    html += "<form action='/connect' method='POST'>";
+    html += "SSID: <input type='text' name='ssid'><br>";
+    html += "Password: <input type='password' name='password'><br>";
+    html += "<input type='submit' value='Connect'>";
+    html += "</form></body></html>";
+    server.send(200, "text/html", html);
+}
+
+void handleConnect() {
+    if (server.hasArg("ssid") && server.hasArg("password")) {
+        String ssid = server.arg("ssid");
+        String password = server.arg("password");
+
+        preferences.begin("wifi", false);
+        preferences.putString("ssid", ssid);
+        preferences.putString("password", password);
+        preferences.end();
+
+        server.send(200, "text/plain", "WiFi info saved! Rebooting...");
+
+        delay(3000);
+        ESP.restart();
+    } else {
+        server.send(400, "text/plain", "Missing SSID or Password!");
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    preferences.begin("wifi", true);
+    String savedSSID = preferences.getString("ssid", "");
+    String savedPassword = preferences.getString("password", "");
+    preferences.end();
+
+    if (savedSSID != "") {
+        WiFi.begin(savedSSID.c_str(), savedPassword.c_str());
+        Serial.print("Connecting to WiFi...");
+        if (WiFi.waitForConnectResult() == WL_CONNECTED) {
+            Serial.println("Connected!");
+            return;
+        }
+    }
+
+    Serial.println("Starting AP Mode...");
+    WiFi.softAP(apSSID, apPassword);
+    server.on("/", handleRoot);
+    server.on("/connect", handleConnect);
+    server.begin();
+}
+
+void loop() {
+    server.handleClient();
+}
