@@ -3,7 +3,7 @@
 
 // NTP Server
 const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 3600;  // Berlin (CET: UTC+1)
+const long  gmtOffset_sec = 3600;       // Berlin (CET: UTC+1)
 const int   daylightOffset_sec = 3600;  // Additional 1 hour for CEST (UTC+2 in summer)
 
 void setup() {
@@ -12,13 +12,12 @@ void setup() {
     WiFiManager wm;
     // wm.resetSettings();
 
-    bool res;
-    res = wm.autoConnect("ESP32 AP","abcd1234"); // password protected access point
+    bool connectionResult;
+    connectionResult = wm.autoConnect("ESP32 Configuration","abcd1234"); // password protected access point
 
-    if(!res) {
+    if(!connectionResult) {
         Serial.println("Failed to connect");
-    } 
-    else { 
+    } else { 
         Serial.println("Connected to Internet...");
         Serial.println(WiFi.localIP());
     }
